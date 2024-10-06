@@ -1,16 +1,20 @@
-def generate_pascals_triangle(n):
-    triangle = [[1]]
-    for i in range(1, n):
-        previous_row = triangle[-1]
-        current_row = [1]
-        for j in range(1, len(previous_row)):
-            current_row.append(previous_row[j-1] + previous_row[j])
-        current_row.append(1)
-        triangle.append(current_row)
-    return triangle
+def pascal_triangle(n):
+    """
+    Returns a list of lists of integers representing Pascal's triangle of n.
+    Returns an empty list if n <= 0.
+    """
+    if n <= 0:
+        return []
 
-n = 5
-triangle = generate_pascals_triangle(n)
-for row in triangle:
-    print(row)
+    triangle = []
+    for i in range(n):
+        # Create a row filled with 1's
+        row = [1] * (i + 1)
+        # Update the inner elements of the row (if applicable)
+        for j in range(1, i):
+            row[j] = triangle[i - 1][j - 1] + triangle[i - 1][j]
+        # Add the row to the triangle
+        triangle.append(row)
+    
+    return triangle
 
