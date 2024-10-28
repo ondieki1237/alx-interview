@@ -47,3 +47,4 @@ except KeyboardInterrupt:
     # Handle interrupt to print the final stats
     print_stats()
     raise
+
