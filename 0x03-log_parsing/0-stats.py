@@ -1,50 +1,50 @@
 #!/usr/bin/python3
+"""
+log parsing
+"""
+
 import sys
-import signal
+import re
 
-# Initialize total file size and status code dictionary
-total_size = 0
-status_counts = {str(code): 0 for code in [200, 301, 400, 401, 403, 404, 405, 500]}
-line_count = 0
 
-def print_stats():
-    """ Print the total size and status code counts in ascending order """
-    print("File size:", total_size)
-    for code in sorted(status_counts.keys()):
-        if status_counts[code] > 0:
-            print(f"{code}: {status_counts[code]}")
+def output(log: dict) -> None:
+    """
+    helper function to display stats
+    """
+    print("File size: {}".format(log["file_size"]))
+    for code in sorted(log["code_frequency"]):
+        if log["code_frequency"][code]:
+            print("{}: {}".format(code, log["code_frequency"][code]))
 
-def handle_interrupt(signum, frame):
-    """ Signal handler for keyboard interrupt (CTRL + C) """
-    print_stats()
-    sys.exit(0)
 
-# Register the signal handler for SIGINT
-signal.signal(signal.SIGINT, handle_interrupt)
+if __name__ == "__main__":
+    regex = re.compile(
+    r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3} - \[\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}.\d+\] "GET /projects/260 HTTP/1.1" (.{3}) (\d+)')  # nopep8
 
-try:
-    for line in sys.stdin:
-        line_count += 1
-        parts = line.strip().split()
-        if len(parts) < 7:
-            continue  # Skip lines that do not have enough parts
-        
-        # Extract file size and status code
-        try:
-            status_code = parts[-2]
-            file_size = int(parts[-1])
-            total_size += file_size
-            if status_code in status_counts:
-                status_counts[status_code] += 1
-        except ValueError:
-            continue  # Skip lines with invalid file size or status code
+    line_count = 0
+    log = {}
+    log["file_size"] = 0
+    log["code_frequency"] = {
+        str(code): 0 for code in [
+            200, 301, 400, 401, 403, 404, 405, 500]}
 
-        # Print stats every 10 lines
-        if line_count % 10 == 0:
-            print_stats()
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            match = regex.fullmatch(line)
+            if (match):
+                line_count += 1
+                code = match.group(1)
+                file_size = int(match.group(2))
 
-except KeyboardInterrupt:
-    # Handle interrupt to print the final stats
-    print_stats()
-    raise
+                # File size
+                log["file_size"] += file_size
 
+                # status code
+                if (code.isdecimal()):
+                    log["code_frequency"][code] += 1
+
+                if (line_count % 10 == 0):
+                    output(log)
+    finally:
+        output(log)
